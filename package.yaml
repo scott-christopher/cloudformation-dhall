@@ -1,0 +1,23 @@
+name:                cloudformation-dhall
+version:             0.1.0.0
+github:              "scott-christopher/cloudformation-dhall"
+license:             BSD3
+author:              "Scott Christopher"
+maintainer:          "scott.christopher@konputa.com"
+copyright:           "2019 Scott Christopher"
+
+extra-source-files:
+- README.md
+
+description:         Please see the README on GitHub at <https://github.com/scott-christopher/cloudformation-dhall#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- aeson
+- containers
+- text
+- unordered-containers
+
+library:
+  source-dirs: src
+

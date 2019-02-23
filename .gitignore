@@ -1,0 +1,4 @@
+.stack-work/
+cloudformation-dhall.cabal
+*~
+CloudFormationResourceSpecification.json
