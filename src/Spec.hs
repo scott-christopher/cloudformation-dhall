@@ -1,21 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE DeriveGeneric #-}
 
 module Spec where
 
 import Control.Applicative  ( (<|>) )
-import Data.Aeson           ( FromJSON
-                            , Object
-                            , parseJSON
-                            , withObject
-                            , withText
-                            , (.:)
-                            , (.:?)
-                            , (.!=)
+import Data.Aeson           ( FromJSON, Object
+                            , parseJSON, withObject, withText
+                            , (.:), (.:?), (.!=)
                             )
 import Data.Aeson.Types     ( Parser )
-import Data.Foldable        ( asum ) 
-import Data.Map             ( Map, empty, singleton )
+import Data.Map             ( Map
+                            , empty, singleton )
 import Data.Text            ( Text )
 
 -----------------------------------------------
@@ -66,14 +60,13 @@ isRequired True  = Required
 isRequired False = Optional
 
 parseType :: Object -> Parser PropertyType
-parseType v = asum [ v .: "Type" >>= parsePropType v
-                   , PrimProp <$> v .: "PrimitiveType" 
-                   , v .: "PrimitiveType" >>= parseMapPrim
-                   ]
-                where
-                  parseMapPrim :: Text -> Parser PropertyType -- workaround for "PrimitiveType": "Map"
-                  parseMapPrim "Map" = pure $ MapProp (PrimProp PString)
-                  parseMapPrim _     = fail "Not a Primitive Map"
+parseType v = (v .: "Type" >>= parsePropType v)
+          <|> (PrimProp <$> v .: "PrimitiveType")
+          <|> (v .: "PrimitiveType" >>= parseMapPrim)
+            where
+              parseMapPrim :: Text -> Parser PropertyType -- workaround for "PrimitiveType": "Map"
+              parseMapPrim "Map" = pure $ MapProp (PrimProp PString)
+              parseMapPrim _     = fail "Not a Primitive Map"
 
 parsePropType :: Object -> Text -> Parser PropertyType
 parsePropType v "List" = ListProp <$> v .:? "DuplicatesAllowed" .!= False <*> itemType v 
@@ -93,11 +86,10 @@ instance FromJSON Spec where
     <*> v .: "ResourceSpecificationVersion"
 
 instance FromJSON PropertyTypes where
-  parseJSON = withObject "PropertyTypes" $ \v -> asum
-    [ PropertyTypes <$> v .: "Documentation" <*> v .: "Properties"
-    , PropertyTypes "" <$> -- Workaround for AWS::EC2::LaunchTemplate.CapacityReservationPreference
-        (singleton "" . PropertySpec "" RequiredUndefined UpdateTypeUndefined <$> parseType v)
-    ]
+  parseJSON = withObject "PropertyTypes" $ \v ->
+    PropertyTypes <$> v .: "Documentation" <*> v .: "Properties"
+    <|> -- Workaround for AWS::EC2::LaunchTemplate.CapacityReservationPreference
+    PropertyTypes "" <$> (singleton "" . PropertySpec "" RequiredUndefined UpdateTypeUndefined <$> parseType v)
 
 instance FromJSON PropertyType where
   parseJSON = withObject "PropertyType" parseType
